@@ -36,6 +36,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Flag to enable support for the new language APIs
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -73,4 +75,6 @@ dependencies {
 
     implementation(libs.coil.core)
     implementation(libs.coil.network)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
