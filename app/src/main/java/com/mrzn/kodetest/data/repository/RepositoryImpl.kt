@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -33,25 +32,23 @@ class RepositoryImpl @Inject constructor(
     private val loadEmployees: StateFlow<LoadResult> = flow {
         loadEmployeesEvents.emit(Unit)
         loadEmployeesEvents.collect {
+            emit(LoadResult.Loading)
             val response = apiService.loadEmployees()
             _employees.addAll(mapper.mapResponseToEmployees(response))
-            emit(employees)
+            emit(LoadResult.Success(employees))
         }
-    }
-        .map { LoadResult.Success(it) as LoadResult }
-        .catch {
-            emit(
-                when (it) {
-                    is HttpException -> LoadResult.Failure.ServerError
-                    else -> LoadResult.Failure.NoInternet
-                }
-            )
-        }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.Lazily,
-            initialValue = LoadResult.Success(employees)
+    }.catch {
+        emit(
+            when (it) {
+                is HttpException -> LoadResult.Failure.ServerError
+                else -> LoadResult.Failure.NoInternet
+            }
         )
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.Lazily,
+        initialValue = LoadResult.Initial
+    )
 
     override fun getEmployees(): StateFlow<LoadResult> = loadEmployees
 
