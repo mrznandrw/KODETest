@@ -12,4 +12,7 @@ data class Employee(
     val position: String,
     val birthday: LocalDate,
     val phone: String
-)
+) {
+    val fullName: String
+        get() = "$firstName $lastName"
+}
