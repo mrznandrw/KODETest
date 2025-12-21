@@ -1,6 +1,5 @@
-package com.mrzn.kodetest.ui.theme
+package com.mrzn.kodetest.presentation.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,15 +11,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    background = Black,
+    surface = Black,
+    primary = White,
+    secondary = Grey40,
+    tertiary = Grey30,
+    inversePrimary = Purple,
+    error = Red,
+    onError = White,
+    secondaryContainer = Grey60,
+    onSecondaryContainer = Grey20,
+    surfaceContainer = Black,
+    surfaceVariant = ShimmerBaseDark,
+    onSurfaceVariant = ShimmerHighlightDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    background = White,
+    surface = White,
+    primary = Black,
+    secondary = Grey40,
+    tertiary = Grey30,
+    inversePrimary = Purple,
+    error = Red,
+    onError = White,
+    secondaryContainer = Grey10,
+    onSecondaryContainer = Grey20,
+    surfaceContainer = White,
+    surfaceVariant = ShimmerBaseLight,
+    onSurfaceVariant = ShimmerHighlightLight
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -37,7 +56,7 @@ private val LightColorScheme = lightColorScheme(
 fun KODETestTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
