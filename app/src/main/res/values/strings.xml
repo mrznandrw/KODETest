@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">KODE Test</string>
+    <string name="search_placeholder">Введи имя, тег, почту…</string>
+    <string name="label_cancel">Отмена</string>
+    <string name="button_try_again">Попробовать снова</string>
+    <string name="critical_error_title">Какой-то сверхразум все сломал</string>
+    <string name="critical_error_subtitle">Постараемся быстро починить</string>
+    <string name="avatar_employee_description">Аватар работника</string>
+    <string name="icon_clear_description">Очистить</string>
+    <string name="icon_sort_description">Сортировка</string>
+    <string name="icon_search_description">Поиск</string>
 </resources>
