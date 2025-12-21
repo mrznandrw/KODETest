@@ -9,5 +9,5 @@ class GetEmployeesUseCase @Inject constructor(
     private val repository: Repository
 ) {
 
-    operator fun invoke(): StateFlow<LoadResult> = repository.getEmployees()
+    operator fun invoke(): StateFlow<LoadResult> = repository.employees
 }

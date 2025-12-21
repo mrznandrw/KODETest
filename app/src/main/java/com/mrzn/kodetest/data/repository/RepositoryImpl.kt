@@ -27,33 +27,31 @@ class RepositoryImpl @Inject constructor(
 
     private val loadEmployeesEvents = MutableSharedFlow<Unit>()
 
+    private val loadEmployees = flow {
+        emit(LoadResult.Loading)
+
+        val response = apiService.loadEmployees()
+        val employees = mapper.mapResponseToEmployees(response)
+
+        emit(LoadResult.Success(employees))
+    }.catch {
+        emit(
+            when (it) {
+                is HttpException -> LoadResult.Failure.ServerError
+                else -> LoadResult.Failure.NoInternet
+            }
+        )
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val loadEmployees: StateFlow<LoadResult> =
-        loadEmployeesEvents
-            .onStart { emit(Unit) }
-            .flatMapLatest {
-                flow {
-                    emit(LoadResult.Loading)
-
-                    val response = apiService.loadEmployees()
-                    val employees = mapper.mapResponseToEmployees(response)
-
-                    emit(LoadResult.Success(employees))
-                }.catch {
-                    emit(
-                        when (it) {
-                            is HttpException -> LoadResult.Failure.ServerError
-                            else -> LoadResult.Failure.NoInternet
-                        }
-                    )
-                }
-            }.stateIn(
-                scope = scope,
-                started = SharingStarted.Lazily,
-                initialValue = LoadResult.Initial
-            )
-
-    override fun getEmployees(): StateFlow<LoadResult> = loadEmployees
+    override val employees: StateFlow<LoadResult> = loadEmployeesEvents
+        .onStart { emit(Unit) }
+        .flatMapLatest { loadEmployees }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Lazily,
+            initialValue = LoadResult.Initial
+        )
 
     override suspend fun refreshEmployees() {
         loadEmployeesEvents.emit(Unit)

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface Repository {
 
-    fun getEmployees(): StateFlow<LoadResult>
+    val employees: StateFlow<LoadResult>
 
     suspend fun refreshEmployees()
 }
