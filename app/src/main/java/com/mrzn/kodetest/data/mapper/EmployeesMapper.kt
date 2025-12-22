@@ -18,7 +18,7 @@ class EmployeesMapper @Inject constructor() {
         avatarUrl = avatarUrl,
         firstName = firstName,
         lastName = lastName,
-        userTag = userTag,
+        userTag = userTag.lowercase(),
         department = department.toDepartment(),
         position = position,
         birthday = LocalDate.parse(birthday),
