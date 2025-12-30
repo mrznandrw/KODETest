@@ -22,12 +22,10 @@ class RepositoryImpl @Inject constructor(
     private val loadEmployeesEvents = MutableSharedFlow<Unit>()
 
     private val loadEmployees = flow {
-        emit(LoadResult.Loading)
-
         val response = apiService.loadEmployees()
         val employees = mapper.mapResponseToEmployees(response)
 
-        emit(LoadResult.Success(employees))
+        emit(LoadResult.Success(employees) as LoadResult)
     }.catch {
         emit(
             when (it) {
