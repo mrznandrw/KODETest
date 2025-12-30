@@ -4,17 +4,13 @@ import com.mrzn.kodetest.data.mapper.EmployeesMapper
 import com.mrzn.kodetest.data.network.api.ApiService
 import com.mrzn.kodetest.domain.repository.Repository
 import com.mrzn.kodetest.domain.result.LoadResult
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -22,8 +18,6 @@ class RepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val mapper: EmployeesMapper
 ) : Repository {
-
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     private val loadEmployeesEvents = MutableSharedFlow<Unit>()
 
@@ -44,14 +38,9 @@ class RepositoryImpl @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val employees: StateFlow<LoadResult> = loadEmployeesEvents
+    override val employees: Flow<LoadResult> = loadEmployeesEvents
         .onStart { emit(Unit) }
         .flatMapLatest { loadEmployees }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.Lazily,
-            initialValue = LoadResult.Initial
-        )
 
     override suspend fun refreshEmployees() {
         loadEmployeesEvents.emit(Unit)
