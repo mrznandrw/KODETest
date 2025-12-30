@@ -9,7 +9,8 @@ sealed class MainScreenState {
     data object Loading : MainScreenState()
 
     data class Employees(
-        val employees: List<Employee>
+        val employees: List<Employee>,
+        val isRefreshing: Boolean = false
     ) : MainScreenState()
 
     data object Error : MainScreenState()
