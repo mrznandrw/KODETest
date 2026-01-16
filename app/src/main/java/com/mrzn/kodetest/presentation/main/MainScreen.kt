@@ -1,5 +1,6 @@
 package com.mrzn.kodetest.presentation.main
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,10 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +27,8 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,6 +42,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,9 +59,18 @@ fun MainScreen() {
     val screenState = viewModel.screenState.collectAsState(MainScreenState.Initial)
 
     when (val currentState = screenState.value) {
-        is MainScreenState.Employees -> MainScreenContent(employees = currentState.employees)
+        is MainScreenState.Employees -> MainScreenContent(
+            employees = currentState.employees,
+            isRefreshing = currentState.isRefreshing,
+            onRefresh = viewModel::refreshList
+        )
+
         MainScreenState.Error -> ErrorContent()
-        MainScreenState.Loading -> MainScreenContent(isLoading = true)
+        MainScreenState.Loading -> MainScreenContent(
+            isLoading = true,
+            onRefresh = { }
+        )
+
         MainScreenState.Initial -> {}
     }
 }
@@ -63,11 +78,24 @@ fun MainScreen() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenContent(
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
     employees: List<Employee>? = null,
     isLoading: Boolean = false,
-    modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    val state = rememberPullToRefreshState()
+    val columnOffset by animateDpAsState(
+        targetValue = when {
+            isRefreshing -> 70.dp
+            state.distanceFraction in 0f..1f -> 70.dp * state.distanceFraction
+            state.distanceFraction > 1 -> 70.dp * (1 + (state.distanceFraction - 1f) * 0.4f)
+            else -> 0.dp
+        },
+        label = "columnOffset"
+    )
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -83,27 +111,57 @@ fun MainScreenContent(
             }
         },
         content = { innerPadding ->
-            LazyColumn(
-                modifier = Modifier.padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                if (isLoading) {
+            if (isLoading) {
+                ScreenLazyColumn(modifier = Modifier.padding(innerPadding)) {
                     items(count = 20) {
                         EmployeeCardSkeleton(modifier = Modifier.padding(vertical = 4.dp))
                     }
-                } else {
-                    employees?.let {
-                        items(items = employees, key = { it.id }) {
-                            EmployeeCard(
-                                employee = it,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
+                }
+            } else {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                    modifier = Modifier.padding(innerPadding),
+                    state = state,
+                    indicator = {
+                        PullToRefreshIndicator(
+                            modifier = Modifier.align(Alignment.TopCenter),
+                            isRefreshing = isRefreshing,
+                            state = state
+                        )
+                    }
+
+                ) {
+                    ScreenLazyColumn(
+                        modifier = Modifier.offset {
+                            IntOffset(x = 0, y = columnOffset.roundToPx())
+                        }
+                    ) {
+                        employees?.let {
+                            items(items = employees, key = { it.id }) {
+                                EmployeeCard(
+                                    employee = it,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    )
+}
+
+@Composable
+fun ScreenLazyColumn(
+    modifier: Modifier = Modifier,
+    content: LazyListScope.() -> Unit
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        content = content
     )
 }
 
