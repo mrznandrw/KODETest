@@ -59,33 +59,24 @@ fun MainScreen() {
     val screenState = viewModel.screenState.collectAsState(MainScreenState.Initial)
 
     when (val currentState = screenState.value) {
-        is MainScreenState.Employees -> MainScreenContent(
+        is MainScreenState.Employees -> EmployeesContent(
             employees = currentState.employees,
             isRefreshing = currentState.isRefreshing,
             onRefresh = viewModel::refreshList
         )
 
         MainScreenState.Error -> ErrorContent()
-        MainScreenState.Loading -> MainScreenContent(
-            isLoading = true,
-            onRefresh = { }
-        )
-
+        MainScreenState.Loading -> ContentLoading()
         MainScreenState.Initial -> {}
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenContent(
-    onRefresh: () -> Unit,
-    modifier: Modifier = Modifier,
-    employees: List<Employee>? = null,
-    isLoading: Boolean = false,
-    isRefreshing: Boolean = false
+fun EmployeesContent(
+    employees: List<Employee>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
     val state = rememberPullToRefreshState()
     val columnOffset by animateDpAsState(
         targetValue = when {
@@ -96,6 +87,55 @@ fun MainScreenContent(
         },
         label = "columnOffset"
     )
+    MainScaffold { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.padding(innerPadding),
+            state = state,
+            indicator = {
+                PullToRefreshIndicator(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    isRefreshing = isRefreshing,
+                    state = state
+                )
+            }
+
+        ) {
+            ScreenLazyColumn(
+                modifier = Modifier.offset {
+                    IntOffset(x = 0, y = columnOffset.roundToPx())
+                }
+            ) {
+                items(items = employees, key = { it.id }) {
+                    EmployeeCard(
+                        employee = it,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ContentLoading() {
+    MainScaffold { innerPadding ->
+        ScreenLazyColumn(modifier = Modifier.padding(innerPadding)) {
+            items(count = 20) {
+                EmployeeCardSkeleton(modifier = Modifier.padding(vertical = 4.dp))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScaffold(
+    modifier: Modifier = Modifier,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -110,45 +150,7 @@ fun MainScreenContent(
                 DepartmentsTabRow()
             }
         },
-        content = { innerPadding ->
-            if (isLoading) {
-                ScreenLazyColumn(modifier = Modifier.padding(innerPadding)) {
-                    items(count = 20) {
-                        EmployeeCardSkeleton(modifier = Modifier.padding(vertical = 4.dp))
-                    }
-                }
-            } else {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
-                    modifier = Modifier.padding(innerPadding),
-                    state = state,
-                    indicator = {
-                        PullToRefreshIndicator(
-                            modifier = Modifier.align(Alignment.TopCenter),
-                            isRefreshing = isRefreshing,
-                            state = state
-                        )
-                    }
-
-                ) {
-                    ScreenLazyColumn(
-                        modifier = Modifier.offset {
-                            IntOffset(x = 0, y = columnOffset.roundToPx())
-                        }
-                    ) {
-                        employees?.let {
-                            items(items = employees, key = { it.id }) {
-                                EmployeeCard(
-                                    employee = it,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        content = content
     )
 }
 
