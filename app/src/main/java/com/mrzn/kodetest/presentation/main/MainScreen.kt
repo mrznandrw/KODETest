@@ -80,11 +80,20 @@ fun EmployeesContent(
     onRefresh: () -> Unit
 ) {
     val state = rememberPullToRefreshState()
+    val pullToRefreshState = rememberPullToRefreshState()
     val columnOffset by animateDpAsState(
         targetValue = when {
             isRefreshing -> 70.dp
             state.distanceFraction in 0f..1f -> 70.dp * state.distanceFraction
             state.distanceFraction > 1 -> 70.dp * (1 + (state.distanceFraction - 1f) * 0.4f)
+            pullToRefreshState.distanceFraction in 0f..1f -> {
+                70.dp * pullToRefreshState.distanceFraction
+            }
+
+            pullToRefreshState.distanceFraction > 1 -> {
+                70.dp * (1 + (pullToRefreshState.distanceFraction - 1f) * 0.4f)
+            }
+
             else -> 0.dp
         },
         label = "columnOffset"
@@ -94,12 +103,13 @@ fun EmployeesContent(
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
             modifier = Modifier.padding(innerPadding),
-            state = state,
+            state = pullToRefreshState,
             indicator = {
                 PullToRefreshIndicator(
                     modifier = Modifier.align(Alignment.TopCenter),
                     isRefreshing = isRefreshing,
                     state = state
+                    state = pullToRefreshState
                 )
             }
 
