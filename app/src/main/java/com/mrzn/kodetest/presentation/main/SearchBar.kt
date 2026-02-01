@@ -44,7 +44,10 @@ import androidx.compose.ui.unit.sp
 import com.mrzn.kodetest.R
 
 @Composable
-fun SearchBar(modifier: Modifier = Modifier) {
+fun SearchBar(
+    onSortClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
 
     val customTextSelectionColors = TextSelectionColors(
         handleColor = MaterialTheme.colorScheme.inversePrimary,
@@ -68,7 +71,7 @@ fun SearchBar(modifier: Modifier = Modifier) {
                 onFocusChanged = {
                     hasFocus = it.isFocused
                 },
-                onSortClicked = {}
+                onSortClicked = onSortClick
             )
         }
 
