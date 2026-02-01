@@ -9,7 +9,8 @@ sealed class MainScreenState {
     data object Loading : MainScreenState()
 
     data class Employees(
-        val employees: List<Employee>,
+        val employees: Pair<List<Employee>, List<Employee>>,
+        val sortType: SortType,
         val isRefreshing: Boolean = false
     ) : MainScreenState()
 
