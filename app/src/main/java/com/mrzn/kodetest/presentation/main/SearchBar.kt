@@ -71,7 +71,7 @@ fun SearchBar(
                 onFocusChanged = {
                     hasFocus = it.isFocused
                 },
-                onSortClicked = onSortClick
+                onSortClick = onSortClick
             )
         }
 
@@ -98,7 +98,7 @@ fun RowScope.SearchTextField(
     state: TextFieldState,
     hasFocus: Boolean,
     onFocusChanged: (FocusState) -> Unit,
-    onSortClicked: () -> Unit
+    onSortClick: () -> Unit
 ) {
     val enabled = true
     val lineLimits = TextFieldLineLimits.SingleLine
@@ -171,7 +171,7 @@ fun RowScope.SearchTextField(
 
                         !hasFocus -> {
                             IconButton(
-                                onClick = onSortClicked
+                                onClick = onSortClick
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_list_ui_alt),
