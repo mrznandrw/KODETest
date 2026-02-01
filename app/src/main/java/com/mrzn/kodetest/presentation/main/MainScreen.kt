@@ -49,7 +49,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.mrzn.kodetest.R
 import com.mrzn.kodetest.domain.entity.Employee
+import com.mrzn.kodetest.extensions.dayMonth
 import com.mrzn.kodetest.presentation.getApplicationComponent
+import java.time.LocalDate
 
 @Composable
 fun MainScreen() {
@@ -221,6 +223,7 @@ fun DepartmentsTabRow() {
 @Composable
 fun EmployeeCard(
     employee: Employee,
+    showBirthday: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -257,6 +260,14 @@ fun EmployeeCard(
                 text = employee.position,
                 color = MaterialTheme.colorScheme.secondary,
                 fontSize = 13.sp
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        if (showBirthday) {
+            Text(
+                text = employee.birthday.dayMonth(),
+                color = MaterialTheme.colorScheme.secondary,
+                fontSize = 15.sp
             )
         }
     }
