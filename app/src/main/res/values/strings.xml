@@ -9,4 +9,7 @@
     <string name="icon_clear_description">Очистить</string>
     <string name="icon_sort_description">Сортировка</string>
     <string name="icon_search_description">Поиск</string>
+    <string name="sort_label">Сортировка</string>
+    <string name="sort_by_alphabet">По алфавиту</string>
+    <string name="sort_by_birthday">По дню рождения</string>
 </resources>
