@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +54,6 @@ import com.mrzn.kodetest.R
 import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.extensions.dayMonth
 import com.mrzn.kodetest.presentation.getApplicationComponent
-import java.time.LocalDate
 
 @Composable
 fun MainScreen() {
@@ -62,9 +64,9 @@ fun MainScreen() {
 
     when (val currentState = screenState.value) {
         is MainScreenState.Employees -> EmployeesContent(
-            employees = currentState.employees,
-            isRefreshing = currentState.isRefreshing,
-            onRefresh = viewModel::refreshList
+            state = currentState,
+            onRefresh = viewModel::refreshList,
+            onSortingSelect = viewModel::changeSorting
         )
 
         MainScreenState.Error -> ErrorContent()
@@ -75,17 +77,24 @@ fun MainScreen() {
 
 @Composable
 fun EmployeesContent(
-    employees: List<Employee>,
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    state: MainScreenState.Employees,
+    onRefresh: () -> Unit,
+    onSortingSelect: (SortType) -> Unit
 ) {
-    val state = rememberPullToRefreshState()
+
+    val isSortByBirthday = (state.sortType == SortType.BIRTHDAY)
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberSaveable(
+        inputs = arrayOf(state.sortType, state.employees),
+        saver = LazyListState.Saver
+    ) {
+        LazyListState()
+    }
+
     val pullToRefreshState = rememberPullToRefreshState()
     val columnOffset by animateDpAsState(
         targetValue = when {
-            isRefreshing -> 70.dp
-            state.distanceFraction in 0f..1f -> 70.dp * state.distanceFraction
-            state.distanceFraction > 1 -> 70.dp * (1 + (state.distanceFraction - 1f) * 0.4f)
+            state.isRefreshing -> 70.dp
             pullToRefreshState.distanceFraction in 0f..1f -> {
                 70.dp * pullToRefreshState.distanceFraction
             }
@@ -98,34 +107,53 @@ fun EmployeesContent(
         },
         label = "columnOffset"
     )
-    MainScaffold { innerPadding ->
+
+    MainScaffold(onSortClick = { showBottomSheet = true }) { innerPadding ->
         PullToRefreshBox(
-            isRefreshing = isRefreshing,
+            isRefreshing = state.isRefreshing,
             onRefresh = onRefresh,
             modifier = Modifier.padding(innerPadding),
             state = pullToRefreshState,
             indicator = {
                 PullToRefreshIndicator(
                     modifier = Modifier.align(Alignment.TopCenter),
-                    isRefreshing = isRefreshing,
-                    state = state
+                    isRefreshing = state.isRefreshing,
                     state = pullToRefreshState
                 )
             }
-
         ) {
             ScreenLazyColumn(
                 modifier = Modifier.offset {
                     IntOffset(x = 0, y = columnOffset.roundToPx())
-                }
+                },
+                state = listState
             ) {
-                items(items = employees, key = { it.id }) {
+                items(items = state.employees.first, key = { it.id }) {
                     EmployeeCard(
                         employee = it,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        showBirthday = isSortByBirthday
                     )
                 }
+                if (isSortByBirthday && state.employees.second.isNotEmpty()) {
+                    item { YearDivider() }
+                    items(items = state.employees.second, key = { it.id }) {
+                        EmployeeCard(
+                            employee = it,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            showBirthday = isSortByBirthday
+                        )
+                    }
+                }
             }
+        }
+
+        if (showBottomSheet) {
+            BottomSheetSorting(
+                onDismissRequest = { showBottomSheet = false },
+                currentSortType = state.sortType,
+                onSortingSelect = onSortingSelect
+            )
         }
     }
 }
@@ -145,6 +173,7 @@ fun ContentLoading() {
 @Composable
 fun MainScaffold(
     modifier: Modifier = Modifier,
+    onSortClick: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -156,7 +185,12 @@ fun MainScaffold(
                 TopAppBar(
                     scrollBehavior = scrollBehavior,
                     expandedHeight = 52.dp,
-                    title = { SearchBar(Modifier.padding(end = 16.dp)) },
+                    title = {
+                        SearchBar(
+                            onSortClick = onSortClick,
+                            modifier = Modifier.padding(end = 16.dp)
+                        )
+                    },
                 )
 
                 DepartmentsTabRow()
@@ -169,10 +203,12 @@ fun MainScaffold(
 @Composable
 fun ScreenLazyColumn(
     modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
+        state = state,
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         content = content
