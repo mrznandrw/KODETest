@@ -6,12 +6,15 @@ import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.domain.result.LoadResult
 import com.mrzn.kodetest.domain.usecase.GetEmployeesUseCase
 import com.mrzn.kodetest.domain.usecase.RefreshEmployeesUseCase
-import kotlinx.coroutines.flow.Flow
+import com.mrzn.kodetest.extensions.mergeWith
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,60 +26,64 @@ class MainViewModel @Inject constructor(
     private val refreshEmployeesUseCase: RefreshEmployeesUseCase
 ) : ViewModel() {
 
-    private var currentSorting: SortType = SortType.ALPHABETICAL
-    private val loadedEmployees = mutableListOf<Employee>()
+    private var employees = MutableStateFlow(emptyList<Employee>())
+    private val isRefreshing = MutableStateFlow(false)
+    private var currentSorting = MutableStateFlow(SortType.ALPHABETICAL)
 
-    private val sortListEvents = MutableSharedFlow<Unit>()
-    private val sortListFlow: Flow<MainScreenState> = sortListEvents.map {
-        (screenState.value as MainScreenState.Employees).copy(
-            employees = loadedEmployees.sort(currentSorting),
-            sortType = currentSorting
-        )
+    private val errorEvents = MutableSharedFlow<Unit>()
+    private val errorFlow = errorEvents.map {
+        MainScreenState.Error
     }
 
-    private val refreshListEvents = MutableSharedFlow<Unit>()
-    private val refreshListFlow: Flow<MainScreenState> = refreshListEvents.map {
-        if (loadedEmployees.isNotEmpty()) {
-            (screenState.value as MainScreenState.Employees).copy(isRefreshing = true)
-        } else {
-            MainScreenState.Loading
-        }
-    }
-
-    val loadResultFlow: Flow<MainScreenState> = getEmployeesUseCase().map {
-        when (it) {
-            is LoadResult.Success -> {
-                loadedEmployees.clear()
-                loadedEmployees.addAll(it.employees)
-                MainScreenState.Employees(
-                    employees = it.employees.sort(currentSorting),
-                    sortType = currentSorting
-                )
-            }
-
-            LoadResult.Failure.NoInternet, LoadResult.Failure.ServerError -> {
-                if (loadedEmployees.isNotEmpty()) {
-                    (screenState.value as MainScreenState.Employees).copy(isRefreshing = false)
-                } else {
-                    MainScreenState.Error
-                }
-            }
-        }
-    }
-
-    fun changeSorting(sortType: SortType) {
-        currentSorting = sortType
+    private fun loadEmployees() {
         viewModelScope.launch {
-            sortListEvents.emit(Unit)
+            getEmployeesUseCase()
+                .collect {
+                    when (it) {
+                        is LoadResult.Success -> {
+                            if (employees.value == it.employees) isRefreshing.value = false
+                            employees.value = it.employees
+                        }
+
+                        LoadResult.Failure.NoInternet, LoadResult.Failure.ServerError -> {
+                            isRefreshing.value = false
+                            if (employees.value.isNotEmpty()) {
+                                //todo show snackbar with error
+                            } else {
+                                errorEvents.emit(Unit)
+                            }
+                        }
+                    }
+                }
         }
     }
 
-    val screenState: StateFlow<MainScreenState> = merge(
-        loadResultFlow,
-        refreshListFlow,
-        sortListFlow
-    )
-        .onStart { emit(MainScreenState.Loading) }
+    private val sortedEmployees = employees
+        .filter { it.isNotEmpty() }
+        .combine(currentSorting) { employees, sorting ->
+            employees.sort(sorting)
+        }
+
+    val screenState: StateFlow<MainScreenState> = sortedEmployees
+        .map {
+            MainScreenState.Employees(
+                employees = it,
+                sortType = currentSorting.value
+            )
+        }
+        .onEach { isRefreshing.value = false }
+        .mergeWith(errorFlow)
+        .onStart {
+            emit(MainScreenState.Loading)
+            loadEmployees()
+        }
+        .combine(isRefreshing) { screenState, isRefreshing ->
+            when (screenState) {
+                is MainScreenState.Employees -> screenState.copy(isRefreshing = isRefreshing)
+                MainScreenState.Error if isRefreshing -> MainScreenState.Loading
+                else -> screenState
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
@@ -84,10 +91,14 @@ class MainViewModel @Inject constructor(
         )
 
     fun refreshList() {
+        isRefreshing.value = true
         viewModelScope.launch {
-            refreshListEvents.emit(Unit)
             refreshEmployeesUseCase()
         }
+    }
+
+    fun changeSorting(sortType: SortType) {
+        currentSorting.value = sortType
     }
 
     private fun List<Employee>.sort(sortType: SortType) = when (sortType) {
