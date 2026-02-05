@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
@@ -65,6 +66,7 @@ fun MainScreen() {
     when (val currentState = screenState.value) {
         is MainScreenState.Employees -> EmployeesContent(
             state = currentState,
+            clearSearch = viewModel::clearSearch,
             onRefresh = viewModel::refreshList,
             onSortingSelect = viewModel::changeSorting
         )
@@ -78,18 +80,15 @@ fun MainScreen() {
 @Composable
 fun EmployeesContent(
     state: MainScreenState.Employees,
+    clearSearch: () -> Unit,
     onRefresh: () -> Unit,
     onSortingSelect: (SortType) -> Unit
 ) {
 
     val isSortByBirthday = (state.sortType == SortType.BIRTHDAY)
+    val isEmptySearchResult = state.searchQuery.text.isNotBlank() &&
+            state.employees.first.isEmpty() && state.employees.second.isEmpty()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val listState = rememberSaveable(
-        inputs = arrayOf(state.sortType, state.employees),
-        saver = LazyListState.Saver
-    ) {
-        LazyListState()
-    }
 
     val pullToRefreshState = rememberPullToRefreshState()
     val columnOffset by animateDpAsState(
@@ -108,8 +107,9 @@ fun EmployeesContent(
         label = "columnOffset"
     )
 
-    MainScaffold(onSortClick = { showBottomSheet = true }) { innerPadding ->
     MainScaffold(
+        searchQuery = state.searchQuery,
+        clearSearch = clearSearch,
         onSortClick = { showBottomSheet = true },
         isSortByBirthday = isSortByBirthday
     ) { innerPadding ->
@@ -126,29 +126,17 @@ fun EmployeesContent(
                 )
             }
         ) {
-            ScreenLazyColumn(
-                modifier = Modifier.offset {
-                    IntOffset(x = 0, y = columnOffset.roundToPx())
-                },
-                state = listState
-            ) {
-                items(items = state.employees.first, key = { it.id }) {
-                    EmployeeCard(
-                        employee = it,
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        showBirthday = isSortByBirthday
-                    )
-                }
-                if (isSortByBirthday && state.employees.second.isNotEmpty()) {
-                    item { YearDivider() }
-                    items(items = state.employees.second, key = { it.id }) {
-                        EmployeeCard(
-                            employee = it,
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            showBirthday = isSortByBirthday
-                        )
+            if (isEmptySearchResult) {
+                EmptySearchResult()
+            } else {
+                EmployeesList(
+                    employees = state.employees,
+                    isSortByBirthday = isSortByBirthday,
+                    sortType = state.sortType,
+                    modifier = Modifier.offset {
+                        IntOffset(x = 0, y = columnOffset.roundToPx())
                     }
-                }
+                )
             }
         }
 
@@ -158,6 +146,44 @@ fun EmployeesContent(
                 currentSortType = state.sortType,
                 onSortingSelect = onSortingSelect
             )
+        }
+    }
+}
+
+@Composable
+fun EmployeesList(
+    employees: Pair<List<Employee>, List<Employee>>,
+    isSortByBirthday: Boolean,
+    sortType: SortType,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberSaveable(
+        inputs = arrayOf(sortType, employees),
+        saver = LazyListState.Saver
+    ) {
+        LazyListState()
+    }
+
+    ScreenLazyColumn(
+        modifier = modifier,
+        state = listState
+    ) {
+        items(items = employees.first, key = { it.id }) {
+            EmployeeCard(
+                employee = it,
+                modifier = Modifier.padding(vertical = 4.dp),
+                showBirthday = isSortByBirthday
+            )
+        }
+        if (isSortByBirthday && employees.second.isNotEmpty()) {
+            item { YearDivider() }
+            items(items = employees.second, key = { it.id }) {
+                EmployeeCard(
+                    employee = it,
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    showBirthday = true
+                )
+            }
         }
     }
 }
@@ -177,6 +203,8 @@ fun ContentLoading() {
 @Composable
 fun MainScaffold(
     modifier: Modifier = Modifier,
+    searchQuery: TextFieldState = TextFieldState(),
+    clearSearch: () -> Unit = {},
     onSortClick: () -> Unit = {},
     isSortByBirthday: Boolean = false,
     content: @Composable (PaddingValues) -> Unit
@@ -192,6 +220,8 @@ fun MainScaffold(
                     expandedHeight = 52.dp,
                     title = {
                         SearchBar(
+                            state = searchQuery,
+                            clearSearch = clearSearch,
                             onSortClick = onSortClick,
                             modifier = Modifier.padding(end = 16.dp),
                             isSortByBirthday = isSortByBirthday
