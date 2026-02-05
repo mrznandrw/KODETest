@@ -109,6 +109,10 @@ fun EmployeesContent(
     )
 
     MainScaffold(onSortClick = { showBottomSheet = true }) { innerPadding ->
+    MainScaffold(
+        onSortClick = { showBottomSheet = true },
+        isSortByBirthday = isSortByBirthday
+    ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
             onRefresh = onRefresh,
@@ -174,6 +178,7 @@ fun ContentLoading() {
 fun MainScaffold(
     modifier: Modifier = Modifier,
     onSortClick: () -> Unit = {},
+    isSortByBirthday: Boolean = false,
     content: @Composable (PaddingValues) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -188,7 +193,8 @@ fun MainScaffold(
                     title = {
                         SearchBar(
                             onSortClick = onSortClick,
-                            modifier = Modifier.padding(end = 16.dp)
+                            modifier = Modifier.padding(end = 16.dp),
+                            isSortByBirthday = isSortByBirthday
                         )
                     },
                 )

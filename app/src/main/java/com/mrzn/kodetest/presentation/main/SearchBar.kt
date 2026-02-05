@@ -46,7 +46,8 @@ import com.mrzn.kodetest.R
 @Composable
 fun SearchBar(
     onSortClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSortByBirthday: Boolean = false
 ) {
 
     val customTextSelectionColors = TextSelectionColors(
@@ -71,7 +72,8 @@ fun SearchBar(
                 onFocusChanged = {
                     hasFocus = it.isFocused
                 },
-                onSortClick = onSortClick
+                onSortClick = onSortClick,
+                isSortByBirthday = isSortByBirthday
             )
         }
 
@@ -98,7 +100,8 @@ fun RowScope.SearchTextField(
     state: TextFieldState,
     hasFocus: Boolean,
     onFocusChanged: (FocusState) -> Unit,
-    onSortClick: () -> Unit
+    onSortClick: () -> Unit,
+    isSortByBirthday: Boolean = false
 ) {
     val enabled = true
     val lineLimits = TextFieldLineLimits.SingleLine
@@ -176,7 +179,11 @@ fun RowScope.SearchTextField(
                                 Icon(
                                     painter = painterResource(R.drawable.ic_list_ui_alt),
                                     contentDescription = stringResource(R.string.icon_sort_description),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                    tint = if (isSortByBirthday) {
+                                        MaterialTheme.colorScheme.inversePrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    }
                                 )
                             }
                         }
