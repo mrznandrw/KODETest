@@ -13,8 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.Icon
@@ -45,6 +43,8 @@ import com.mrzn.kodetest.R
 
 @Composable
 fun SearchBar(
+    state: TextFieldState,
+    clearSearch: () -> Unit,
     onSortClick: () -> Unit,
     modifier: Modifier = Modifier,
     isSortByBirthday: Boolean = false
@@ -54,8 +54,6 @@ fun SearchBar(
         handleColor = MaterialTheme.colorScheme.inversePrimary,
         backgroundColor = MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f)
     )
-
-    val state = rememberTextFieldState()
 
     val focusManager = LocalFocusManager.current
     var hasFocus by remember { mutableStateOf(false) }
@@ -72,6 +70,7 @@ fun SearchBar(
                 onFocusChanged = {
                     hasFocus = it.isFocused
                 },
+                onClearClick = clearSearch,
                 onSortClick = onSortClick,
                 isSortByBirthday = isSortByBirthday
             )
@@ -81,7 +80,7 @@ fun SearchBar(
             TextButton(
                 onClick = {
                     focusManager.clearFocus()
-                    state.clearText()
+                    clearSearch()
                 },
                 modifier = Modifier.padding(start = 4.dp)
             ) {
@@ -100,6 +99,7 @@ fun RowScope.SearchTextField(
     state: TextFieldState,
     hasFocus: Boolean,
     onFocusChanged: (FocusState) -> Unit,
+    onClearClick: () -> Unit,
     onSortClick: () -> Unit,
     isSortByBirthday: Boolean = false
 ) {
@@ -160,9 +160,7 @@ fun RowScope.SearchTextField(
                     when {
                         hasFocus && state.text.isNotEmpty() -> {
                             IconButton(
-                                onClick = {
-                                    state.clearText()
-                                }
+                                onClick = onClearClick
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_clear),
