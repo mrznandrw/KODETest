@@ -6,10 +6,12 @@
     <string name="critical_error_title">Какой-то сверхразум все сломал</string>
     <string name="critical_error_subtitle">Постараемся быстро починить</string>
     <string name="avatar_employee_description">Аватар работника</string>
-    <string name="icon_clear_description">Очистить</string>
+    <string name="icon_clear_description">Очистить поисковый запрос</string>
     <string name="icon_sort_description">Сортировка</string>
     <string name="icon_search_description">Поиск</string>
     <string name="sort_label">Сортировка</string>
     <string name="sort_by_alphabet">По алфавиту</string>
     <string name="sort_by_birthday">По дню рождения</string>
+    <string name="empty_search_title">Мы никого не нашли</string>
+    <string name="empty_search_subtitle">Попробуй скорректировать запрос</string>
 </resources>
