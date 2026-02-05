@@ -1,5 +1,6 @@
 package com.mrzn.kodetest.presentation.main
 
+import androidx.compose.foundation.text.input.TextFieldState
 import com.mrzn.kodetest.domain.entity.Employee
 
 sealed class MainScreenState {
@@ -11,6 +12,7 @@ sealed class MainScreenState {
     data class Employees(
         val employees: Pair<List<Employee>, List<Employee>>,
         val sortType: SortType,
+        val searchQuery: TextFieldState,
         val isRefreshing: Boolean = false
     ) : MainScreenState()
 
