@@ -17,4 +17,17 @@ data class Employee(
 ) {
     val fullName: String
         get() = "$firstName $lastName"
+
+    fun doesMatchSearchQuery(query: String): Boolean {
+        val matchingCombinations = listOf(
+            fullName,
+            "$firstName$lastName",
+            "${firstName.first()}${lastName.first()}",
+            userTag
+        )
+
+        return matchingCombinations.any {
+            it.contains(query, ignoreCase = true)
+        }
+    }
 }
