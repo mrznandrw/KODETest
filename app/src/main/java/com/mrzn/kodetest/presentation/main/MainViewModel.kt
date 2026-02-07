@@ -32,9 +32,9 @@ class MainViewModel @Inject constructor(
     private val refreshEmployeesUseCase: RefreshEmployeesUseCase
 ) : ViewModel() {
 
-    private var employees = MutableStateFlow(emptyList<Employee>())
+    private val employees = MutableStateFlow(emptyList<Employee>())
     private val isRefreshing = MutableStateFlow(false)
-    private var currentSorting = MutableStateFlow(SortType.ALPHABETICAL)
+    private val currentSorting = MutableStateFlow(SortType.ALPHABETICAL)
 
     private val searchQuery = TextFieldState()
     private val searchFlow = snapshotFlow { searchQuery.text.trim() }.debounce(500)
@@ -79,7 +79,14 @@ class MainViewModel @Inject constructor(
             }
         }
         .combine(currentSorting) { employees, sorting ->
-            employees.sort(sorting)
+            val sorted = employees.sort(sorting)
+
+            buildMap {
+                put(null, sorted)
+                putAll(sorted.groupBy { it.department })
+            }.mapValues { (_, value) ->
+                value.toUiItems(sorting)
+            }
         }
 
     val screenState: StateFlow<MainScreenState> = sortedEmployees
@@ -124,14 +131,35 @@ class MainViewModel @Inject constructor(
         searchQuery.clearText()
     }
 
-    private fun List<Employee>.sort(sortType: SortType) = when (sortType) {
-        SortType.ALPHABETICAL -> sortedBy { it.fullName } to emptyList()
-        SortType.BIRTHDAY -> {
-            sortedBy {
-                it.birthday.dayOfYear
-            }.partition {
-                it.birthday.dayOfYear >= LocalDate.now().dayOfYear
+    private fun List<Employee>.sort(sortType: SortType): List<Employee> = when (sortType) {
+        SortType.ALPHABETICAL -> sortedBy { it.fullName }
+        SortType.BIRTHDAY -> sortedBy { it.birthday.dayOfYear }
+    }
+
+    private fun List<Employee>.toUiItems(sortType: SortType): List<EmployeeListItem> =
+        when (sortType) {
+            SortType.ALPHABETICAL -> map { it.toEmployeeListItem() }
+
+            SortType.BIRTHDAY -> {
+                val today = LocalDate.now().dayOfYear
+                val (upcoming, previous) = partition {
+                    it.birthday.dayOfYear >= today
+                }
+
+                buildList {
+                    addAll(upcoming.map { it.toEmployeeListItem(true) })
+                    if (previous.isNotEmpty()) {
+                        add(EmployeeListItem.YearDivider)
+                        addAll(previous.map { it.toEmployeeListItem(true) })
+                    }
+                }
             }
         }
-    }
+
+    private fun Employee.toEmployeeListItem(showBirthday: Boolean = false) =
+        EmployeeListItem.EmployeeItem(
+            employee = this,
+            showBirthday = showBirthday
+        )
+
 }

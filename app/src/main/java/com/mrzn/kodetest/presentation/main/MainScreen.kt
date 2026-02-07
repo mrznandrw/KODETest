@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -18,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
@@ -36,7 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,9 +55,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.mrzn.kodetest.R
+import com.mrzn.kodetest.domain.entity.Department
 import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.extensions.dayMonth
+import com.mrzn.kodetest.extensions.labelResId
 import com.mrzn.kodetest.presentation.getApplicationComponent
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen() {
@@ -86,8 +92,6 @@ fun EmployeesContent(
 ) {
 
     val isSortByBirthday = (state.sortType == SortType.BIRTHDAY)
-    val isEmptySearchResult = state.searchQuery.text.isNotBlank() &&
-            state.employees.first.isEmpty() && state.employees.second.isEmpty()
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -107,9 +111,19 @@ fun EmployeesContent(
         label = "columnOffset"
     )
 
+    val departmentsTabs = rememberDepartmentTabs()
+    val pagerState = rememberPagerState { departmentsTabs.size }
+    val scope = rememberCoroutineScope()
+
     MainScaffold(
         searchQuery = state.searchQuery,
         clearSearch = clearSearch,
+        selectedTabIndex = pagerState.targetPage,
+        onTabSelect = {
+            scope.launch {
+                pagerState.animateScrollToPage(it)
+            }
+        },
         onSortClick = { showBottomSheet = true },
         isSortByBirthday = isSortByBirthday
     ) { innerPadding ->
@@ -126,17 +140,20 @@ fun EmployeesContent(
                 )
             }
         ) {
-            if (isEmptySearchResult) {
-                EmptySearchResult()
-            } else {
-                EmployeesList(
-                    employees = state.employees,
-                    isSortByBirthday = isSortByBirthday,
-                    sortType = state.sortType,
-                    modifier = Modifier.offset {
-                        IntOffset(x = 0, y = columnOffset.roundToPx())
-                    }
-                )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.Top
+            ) { page ->
+                state.employees[departmentsTabs[page]]?.let {
+                    EmployeesList(
+                        employees = it,
+                        sortType = state.sortType,
+                        modifier = Modifier.offset {
+                            IntOffset(x = 0, y = columnOffset.roundToPx())
+                        }
+                    )
+                } ?: EmptySearchResult()
             }
         }
 
@@ -152,8 +169,7 @@ fun EmployeesContent(
 
 @Composable
 fun EmployeesList(
-    employees: Pair<List<Employee>, List<Employee>>,
-    isSortByBirthday: Boolean,
+    employees: List<EmployeeListItem>,
     sortType: SortType,
     modifier: Modifier = Modifier
 ) {
@@ -168,21 +184,23 @@ fun EmployeesList(
         modifier = modifier,
         state = listState
     ) {
-        items(items = employees.first, key = { it.id }) {
-            EmployeeCard(
-                employee = it,
-                modifier = Modifier.padding(vertical = 4.dp),
-                showBirthday = isSortByBirthday
-            )
-        }
-        if (isSortByBirthday && employees.second.isNotEmpty()) {
-            item { YearDivider() }
-            items(items = employees.second, key = { it.id }) {
-                EmployeeCard(
-                    employee = it,
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    showBirthday = true
+        items(
+            items = employees,
+            key = { item ->
+                when (item) {
+                    is EmployeeListItem.EmployeeItem -> item.employee.id
+                    EmployeeListItem.YearDivider -> "divider"
+                }
+            }
+        ) { item ->
+            when (item) {
+                is EmployeeListItem.EmployeeItem -> EmployeeCard(
+                    employee = item.employee,
+                    showBirthday = item.showBirthday,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
+
+                EmployeeListItem.YearDivider -> YearDivider()
             }
         }
     }
@@ -205,6 +223,8 @@ fun MainScaffold(
     modifier: Modifier = Modifier,
     searchQuery: TextFieldState = TextFieldState(),
     clearSearch: () -> Unit = {},
+    selectedTabIndex: Int = 0,
+    onTabSelect: (Int) -> Unit = {},
     onSortClick: () -> Unit = {},
     isSortByBirthday: Boolean = false,
     content: @Composable (PaddingValues) -> Unit
@@ -229,7 +249,10 @@ fun MainScaffold(
                     },
                 )
 
-                DepartmentsTabRow()
+                DepartmentsTabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    onTabSelect = onTabSelect,
+                )
             }
         },
         content = content
@@ -252,15 +275,20 @@ fun ScreenLazyColumn(
 }
 
 @Composable
-fun DepartmentsTabRow() {
-    var state by remember { mutableStateOf(0) }
+fun DepartmentsTabRow(
+    selectedTabIndex: Int,
+    onTabSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tabs = rememberDepartmentTabs()
 
     PrimaryScrollableTabRow(
-        selectedTabIndex = state,
+        modifier = modifier,
+        selectedTabIndex = selectedTabIndex,
         indicator = {
             TabRowDefaults.PrimaryIndicator(
                 modifier = Modifier.tabIndicatorOffset(
-                    selectedTabIndex = state,
+                    selectedTabIndex = selectedTabIndex,
                     matchContentSize = false
                 ),
                 width = Dp.Unspecified,
@@ -270,28 +298,14 @@ fun DepartmentsTabRow() {
         minTabWidth = 20.dp
     ) {
 
-        listOf(
-            "Все",
-            "Android",
-            "iOS",
-            "Дизайн",
-            "Менеджмент",
-            "QA",
-            "Офис",
-            "Frontend",
-            "HR",
-            "PR",
-            "Backend",
-            "Техподдержка",
-            "Аналитика"
-        ).forEachIndexed { index, department ->
+        tabs.forEachIndexed { index, department ->
             Tab(
                 modifier = Modifier.height(36.dp),
-                selected = state == index,
-                onClick = { state = index },
+                selected = selectedTabIndex == index,
+                onClick = { onTabSelect(index) },
                 text = {
                     Text(
-                        text = department,
+                        text = stringResource(department.labelResId),
                         fontSize = 15.sp
                     )
                 },
@@ -300,6 +314,11 @@ fun DepartmentsTabRow() {
             )
         }
     }
+}
+
+@Composable
+fun rememberDepartmentTabs(): List<Department?> {
+    return rememberSaveable { listOf(null) + Department.entries }
 }
 
 @Composable
