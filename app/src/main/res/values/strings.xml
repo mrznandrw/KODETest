@@ -14,4 +14,17 @@
     <string name="sort_by_birthday">По дню рождения</string>
     <string name="empty_search_title">Мы никого не нашли</string>
     <string name="empty_search_subtitle">Попробуй скорректировать запрос</string>
+    <string name="department_android">Android</string>
+    <string name="department_ios">iOS</string>
+    <string name="department_design">Дизайн</string>
+    <string name="department_management">Менеджмент</string>
+    <string name="department_qa">QA</string>
+    <string name="department_back_office">Офис</string>
+    <string name="department_frontend">Frontend</string>
+    <string name="department_hr">HR</string>
+    <string name="department_pr">PR</string>
+    <string name="department_backend">Backend</string>
+    <string name="department_support">Техподдержка</string>
+    <string name="department_analytics">Аналитика</string>
+    <string name="label_all">Все</string>
 </resources>
