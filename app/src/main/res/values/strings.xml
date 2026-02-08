@@ -27,4 +27,12 @@
     <string name="department_support">Техподдержка</string>
     <string name="department_analytics">Аналитика</string>
     <string name="label_all">Все</string>
+    <string name="icon_back_description">Назад</string>
+
+    <plurals name="years_plural">
+        <item quantity="one">%d год</item>
+        <item quantity="few">%d года</item>
+        <item quantity="many">%d лет</item>
+        <item quantity="other">%d лет</item>
+    </plurals>
 </resources>
