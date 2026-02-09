@@ -1,6 +1,7 @@
 package com.mrzn.kodetest.presentation.main
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +64,7 @@ import com.mrzn.kodetest.presentation.getApplicationComponent
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainScreen() {
+fun MainScreen(onEmployeeClick: (Employee) -> Unit) {
 
     val component = getApplicationComponent()
     val viewModel: MainViewModel = viewModel(factory = component.getViewModelFactory())
@@ -74,7 +75,8 @@ fun MainScreen() {
             state = currentState,
             clearSearch = viewModel::clearSearch,
             onRefresh = viewModel::refreshList,
-            onSortingSelect = viewModel::changeSorting
+            onSortingSelect = viewModel::changeSorting,
+            onEmployeeClick = onEmployeeClick
         )
 
         MainScreenState.Error -> ErrorContent()
@@ -88,7 +90,8 @@ fun EmployeesContent(
     state: MainScreenState.Employees,
     clearSearch: () -> Unit,
     onRefresh: () -> Unit,
-    onSortingSelect: (SortType) -> Unit
+    onSortingSelect: (SortType) -> Unit,
+    onEmployeeClick: (Employee) -> Unit
 ) {
 
     val isSortByBirthday = (state.sortType == SortType.BIRTHDAY)
@@ -151,7 +154,8 @@ fun EmployeesContent(
                         sortType = state.sortType,
                         modifier = Modifier.offset {
                             IntOffset(x = 0, y = columnOffset.roundToPx())
-                        }
+                        },
+                        onEmployeeClick = onEmployeeClick
                     )
                 } ?: EmptySearchResult()
             }
@@ -171,6 +175,7 @@ fun EmployeesContent(
 fun EmployeesList(
     employees: List<EmployeeListItem>,
     sortType: SortType,
+    onEmployeeClick: (Employee) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberSaveable(
@@ -197,7 +202,8 @@ fun EmployeesList(
                 is EmployeeListItem.EmployeeItem -> EmployeeCard(
                     employee = item.employee,
                     showBirthday = item.showBirthday,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    onClick = onEmployeeClick
                 )
 
                 EmployeeListItem.YearDivider -> YearDivider()
@@ -325,10 +331,13 @@ fun rememberDepartmentTabs(): List<Department?> {
 fun EmployeeCard(
     employee: Employee,
     showBirthday: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (Employee) -> Unit = {}
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick(employee) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -366,6 +375,7 @@ fun EmployeeCard(
         Spacer(modifier = Modifier.weight(1f))
         if (showBirthday) {
             Text(
+//                text = employee.birthday.dayMonth(LocalContext.current),
                 text = employee.birthday.dayMonth(),
                 color = MaterialTheme.colorScheme.secondary,
                 fontSize = 15.sp
