@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.mrzn.kodetest.presentation.main.MainScreen
+import com.mrzn.kodetest.navigation.NavigationRoot
 import com.mrzn.kodetest.presentation.ui.theme.KODETestTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KODETestTheme {
-                MainScreen()
+                NavigationRoot()
             }
         }
     }
