@@ -42,6 +42,7 @@ fun BottomSheetSorting(
         modifier = Modifier.padding(horizontal = 8.dp),
         onDismissRequest = onDismissRequest,
         sheetState = bottomSheetState,
+        containerColor = MaterialTheme.colorScheme.background,
         dragHandle = {
             BottomSheetDefaults.DragHandle(
                 width = 56.dp,
