@@ -1,8 +1,11 @@
 package com.mrzn.kodetest.domain.entity
 
 import androidx.compose.runtime.Immutable
+import com.mrzn.kodetest.domain.util.LocalDateSerializer
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
 
+@Serializable
 @Immutable
 data class Employee(
     val id: String,
@@ -12,6 +15,7 @@ data class Employee(
     val userTag: String,
     val department: Department,
     val position: String,
+    @Serializable(LocalDateSerializer::class)
     val birthday: LocalDate,
     val phone: String
 ) {
