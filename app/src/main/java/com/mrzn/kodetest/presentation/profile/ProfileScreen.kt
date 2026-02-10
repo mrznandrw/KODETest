@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,11 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import coil3.compose.AsyncImage
 import com.mrzn.kodetest.R
 import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.extensions.age
 import com.mrzn.kodetest.extensions.formattedString
+import com.mrzn.kodetest.presentation.components.AvatarImage
 
 @Composable
 fun Profile(
@@ -80,16 +78,9 @@ fun Profile(
                     .padding(top = 28.dp, start = 16.dp, end = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                AsyncImage(
-                    model = employee.avatarUrl,
-                    contentDescription = stringResource(R.string.avatar_employee_description),
-                    modifier = Modifier
-                        .size(104.dp)
-                        .clip(CircleShape),
-                    placeholder = painterResource(R.drawable.ic_avatar_placeholder),
-                    error = painterResource(R.drawable.ic_avatar_placeholder),
-                    fallback = painterResource(R.drawable.ic_avatar_placeholder)
+                AvatarImage(
+                    avatarUrl = employee.avatarUrl,
+                    size = 104.dp
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))

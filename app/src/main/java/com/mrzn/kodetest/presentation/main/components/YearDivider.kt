@@ -1,4 +1,4 @@
-package com.mrzn.kodetest.presentation.main
+package com.mrzn.kodetest.presentation.main.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

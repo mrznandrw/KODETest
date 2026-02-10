@@ -1,4 +1,4 @@
-package com.mrzn.kodetest.presentation.main
+package com.mrzn.kodetest.presentation.main.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource

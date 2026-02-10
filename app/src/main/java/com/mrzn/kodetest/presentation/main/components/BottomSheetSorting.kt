@@ -1,4 +1,4 @@
-package com.mrzn.kodetest.presentation.main
+package com.mrzn.kodetest.presentation.main.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrzn.kodetest.R
+import com.mrzn.kodetest.presentation.main.SortType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
