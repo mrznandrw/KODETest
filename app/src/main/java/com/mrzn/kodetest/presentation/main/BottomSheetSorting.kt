@@ -16,6 +16,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,10 +79,12 @@ fun RadioGroupSorting(
     currentSortType: SortType,
     onSelect: (SortType) -> Unit
 ) {
-    val radioOptions = SortType.entries.associateWith {
-        when (it) {
-            SortType.ALPHABETICAL -> stringResource(R.string.sort_by_alphabet)
-            SortType.BIRTHDAY -> stringResource(R.string.sort_by_birthday)
+    val radioOptions = remember {
+        SortType.entries.associateWith {
+            when (it) {
+                SortType.ALPHABETICAL -> R.string.sort_by_alphabet
+                SortType.BIRTHDAY -> R.string.sort_by_birthday
+            }
         }
     }
     // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
@@ -115,7 +118,7 @@ fun RadioGroupSorting(
                 )
 
                 Text(
-                    text = sortType.value,
+                    text = stringResource(sortType.value),
                     fontSize = 16.sp,
                     modifier = Modifier.padding(start = 12.dp),
                     color = MaterialTheme.colorScheme.primary
