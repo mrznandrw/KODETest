@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -375,8 +376,7 @@ fun EmployeeCard(
         Spacer(modifier = Modifier.weight(1f))
         if (showBirthday) {
             Text(
-//                text = employee.birthday.dayMonth(LocalContext.current),
-                text = employee.birthday.dayMonth(),
+                text = employee.birthday.dayMonth(LocalContext.current),
                 color = MaterialTheme.colorScheme.secondary,
                 fontSize = 15.sp
             )

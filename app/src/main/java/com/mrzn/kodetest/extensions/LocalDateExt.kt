@@ -8,22 +8,10 @@ import java.time.LocalDate
 import java.time.Period
 import java.util.Locale
 
-val moy = hashMapOf<Int, String>(
-    1 to "янв",
-    2 to "фев",
-    3 to "мар",
-    4 to "апр",
-    5 to "май",
-    6 to "июн",
-    7 to "июл",
-    8 to "авг",
-    9 to "сен",
-    10 to "окт",
-    11 to "ноя",
-    12 to "дек"
-)
-
-fun LocalDate.dayMonth() = "${this.dayOfMonth} ${moy[this.monthValue]}"
+fun LocalDate.dayMonth(context: Context): String {
+    val months = context.resources.getStringArray(R.array.months_short)
+    return "${this.dayOfMonth} ${months[this.monthValue - 1]}"
+}
 
 fun LocalDate.formattedString(): String {
     val sdf = SimpleDateFormat("d MMMM yyyy", Locale.getDefault())
