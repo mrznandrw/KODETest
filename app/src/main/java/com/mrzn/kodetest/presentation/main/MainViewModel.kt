@@ -75,7 +75,9 @@ class MainViewModel @Inject constructor(
         val sorted = filtered.sort(sorting)
 
         buildMap {
-            put(null, sorted)
+            if (sorted.isNotEmpty()) {
+                put(null, sorted)
+            }
             putAll(sorted.groupBy { it.department })
         }.mapValues { (_, value) ->
             value.toUiItems(sorting)
