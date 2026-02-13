@@ -16,25 +16,34 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrzn.kodetest.R
 import com.mrzn.kodetest.domain.entity.Employee
+import com.mrzn.kodetest.domain.result.LoadResult
 import com.mrzn.kodetest.presentation.getApplicationComponent
 import com.mrzn.kodetest.presentation.main.components.BottomSheetSorting
 import com.mrzn.kodetest.presentation.main.components.DepartmentsTabRow
@@ -44,6 +53,7 @@ import com.mrzn.kodetest.presentation.main.components.EmptySearchResult
 import com.mrzn.kodetest.presentation.main.components.ErrorContent
 import com.mrzn.kodetest.presentation.main.components.PullToRefreshIndicator
 import com.mrzn.kodetest.presentation.main.components.SearchBar
+import com.mrzn.kodetest.presentation.main.components.SnackbarVisualsWithError
 import com.mrzn.kodetest.presentation.main.components.YearDivider
 import com.mrzn.kodetest.presentation.main.components.rememberDepartmentTabs
 import kotlinx.coroutines.launch
@@ -61,7 +71,8 @@ fun MainScreen(onEmployeeClick: (Employee) -> Unit) {
             clearSearch = viewModel::clearSearch,
             onRefresh = viewModel::refreshList,
             onSortingSelect = viewModel::changeSorting,
-            onEmployeeClick = onEmployeeClick
+            onEmployeeClick = onEmployeeClick,
+            errorShown = viewModel::errorShown
         )
 
         MainScreenState.Error -> ErrorContent()
@@ -75,9 +86,12 @@ fun EmployeesContent(
     clearSearch: () -> Unit,
     onRefresh: () -> Unit,
     onSortingSelect: (SortType) -> Unit,
-    onEmployeeClick: (Employee) -> Unit
+    onEmployeeClick: (Employee) -> Unit,
+    errorShown: () -> Unit
 ) {
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val isSortByBirthday = (state.sortType == SortType.BIRTHDAY)
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
@@ -100,7 +114,34 @@ fun EmployeesContent(
 
     val departmentsTabs = rememberDepartmentTabs()
     val pagerState = rememberPagerState { departmentsTabs.size }
-    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.isRefreshing) {
+        if (state.isRefreshing) {
+            snackbarHostState.showSnackbar(
+                SnackbarVisualsWithError(
+                    message = context.getString(R.string.snackbar_label_refreshing)
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            val message = when (it) {
+                LoadResult.Failure.NoInternet -> context.getString(R.string.snackbar_label_no_internet_error)
+                LoadResult.Failure.ServerError -> context.getString(R.string.snackbar_label_server_error)
+            }
+
+            snackbarHostState.showSnackbar(
+                SnackbarVisualsWithError(
+                    message = message,
+                    isError = true
+                )
+            )
+            errorShown()
+        }
+    }
 
     MainScaffold(
         searchQuery = state.searchQuery,
@@ -112,7 +153,24 @@ fun EmployeesContent(
             }
         },
         onSortClick = { showBottomSheet = true },
-        isSortByBirthday = isSortByBirthday
+        isSortByBirthday = isSortByBirthday,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+
+                val isError = (data.visuals as? SnackbarVisualsWithError)?.isError ?: false
+                val containerColor = if (isError) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.inversePrimary
+                }
+
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = containerColor,
+                    shape = MaterialTheme.shapes.medium,
+                )
+            }
+        }
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
@@ -217,6 +275,7 @@ fun MainScaffold(
     onTabSelect: (Int) -> Unit = {},
     onSortClick: () -> Unit = {},
     isSortByBirthday: Boolean = false,
+    snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -245,6 +304,7 @@ fun MainScaffold(
                 )
             }
         },
+        snackbarHost = snackbarHost,
         content = content
     )
 }
