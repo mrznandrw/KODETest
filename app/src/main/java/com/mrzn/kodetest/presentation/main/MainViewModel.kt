@@ -59,27 +59,28 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private val sortedEmployees = employees
-        .filter { it.isNotEmpty() }
-        .combine(searchFlow) { employees, query ->
-            if (query.isBlank()) {
-                employees
-            } else {
-                employees.filter {
-                    it.doesMatchSearchQuery(query.toString())
-                }
+    private val sortedEmployees = combine(
+        employees.filter { it.isNotEmpty() },
+        searchFlow,
+        currentSorting
+    ) { employees, query, sorting ->
+        val filtered = if (query.isBlank()) {
+            employees
+        } else {
+            employees.filter {
+                it.doesMatchSearchQuery(query.toString())
             }
         }
-        .combine(currentSorting) { employees, sorting ->
-            val sorted = employees.sort(sorting)
 
-            buildMap {
-                put(null, sorted)
-                putAll(sorted.groupBy { it.department })
-            }.mapValues { (_, value) ->
-                value.toUiItems(sorting)
-            }
+        val sorted = filtered.sort(sorting)
+
+        buildMap {
+            put(null, sorted)
+            putAll(sorted.groupBy { it.department })
+        }.mapValues { (_, value) ->
+            value.toUiItems(sorting)
         }
+    }
 
     val screenState: StateFlow<MainScreenState> = sortedEmployees
         .map {
