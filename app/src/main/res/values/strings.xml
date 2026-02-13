@@ -28,6 +28,9 @@
     <string name="department_analytics">Аналитика</string>
     <string name="label_all">Все</string>
     <string name="icon_back_description">Назад</string>
+    <string name="snackbar_label_refreshing">Секундочку, гружусь…</string>
+    <string name="snackbar_label_no_internet_error">Не могу обновить данные. Проверь соединение с интернетом.</string>
+    <string name="snackbar_label_server_error">Не могу обновить данные. Что-то пошло не так</string>
 
     <plurals name="years_plural">
         <item quantity="one">%d год</item>
