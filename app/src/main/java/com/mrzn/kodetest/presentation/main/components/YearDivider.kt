@@ -19,7 +19,7 @@ import java.time.LocalDate
 fun YearDivider() {
     Row(
         modifier = Modifier
-            .padding(vertical = 24.dp)
+            .padding(horizontal = 16.dp, vertical = 24.dp)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

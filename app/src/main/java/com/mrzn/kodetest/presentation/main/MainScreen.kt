@@ -244,7 +244,6 @@ fun EmployeesList(
                 is EmployeeListItem.EmployeeItem -> EmployeeCard(
                     employee = item.employee,
                     showBirthday = item.showBirthday,
-                    modifier = Modifier.padding(vertical = 4.dp),
                     onClick = onEmployeeClick
                 )
 
@@ -259,7 +258,7 @@ fun ContentLoading() {
     MainScaffold { innerPadding ->
         ScreenLazyColumn(modifier = Modifier.padding(innerPadding)) {
             items(count = 20) {
-                EmployeeCardSkeleton(modifier = Modifier.padding(vertical = 4.dp))
+                EmployeeCardSkeleton()
             }
         }
     }
@@ -318,7 +317,7 @@ fun ScreenLazyColumn(
     LazyColumn(
         modifier = modifier,
         state = state,
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         content = content
     )
