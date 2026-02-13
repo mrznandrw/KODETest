@@ -5,8 +5,6 @@ import com.mrzn.kodetest.domain.entity.Department
 
 sealed class MainScreenState {
 
-    data object Initial : MainScreenState()
-
     data object Loading : MainScreenState()
 
     data class Employees(

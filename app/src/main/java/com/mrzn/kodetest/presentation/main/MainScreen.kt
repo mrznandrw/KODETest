@@ -22,7 +22,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.presentation.getApplicationComponent
@@ -53,7 +53,7 @@ fun MainScreen(onEmployeeClick: (Employee) -> Unit) {
 
     val component = getApplicationComponent()
     val viewModel: MainViewModel = viewModel(factory = component.getViewModelFactory())
-    val screenState = viewModel.screenState.collectAsState(MainScreenState.Initial)
+    val screenState = viewModel.screenState.collectAsStateWithLifecycle(MainScreenState.Loading)
 
     when (val currentState = screenState.value) {
         is MainScreenState.Employees -> EmployeesContent(
@@ -66,7 +66,6 @@ fun MainScreen(onEmployeeClick: (Employee) -> Unit) {
 
         MainScreenState.Error -> ErrorContent()
         MainScreenState.Loading -> ContentLoading()
-        MainScreenState.Initial -> {}
     }
 }
 

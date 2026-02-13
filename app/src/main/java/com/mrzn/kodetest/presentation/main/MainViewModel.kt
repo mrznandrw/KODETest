@@ -99,10 +99,7 @@ class MainViewModel @Inject constructor(
         }
         .onEach { isRefreshing.value = false }
         .mergeWith(errorFlow)
-        .onStart {
-            emit(MainScreenState.Loading)
-            loadEmployees()
-        }
+        .onStart { loadEmployees() }
         .combine(isRefreshing) { screenState, isRefreshing ->
             when (screenState) {
                 is MainScreenState.Employees -> screenState.copy(isRefreshing = isRefreshing)
@@ -113,7 +110,7 @@ class MainViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
-            initialValue = MainScreenState.Initial
+            initialValue = MainScreenState.Loading
         )
 
     fun refreshList() {
