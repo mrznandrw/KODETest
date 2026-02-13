@@ -10,6 +10,7 @@ import com.mrzn.kodetest.domain.result.LoadResult
 import com.mrzn.kodetest.domain.usecase.GetEmployeesUseCase
 import com.mrzn.kodetest.domain.usecase.RefreshEmployeesUseCase
 import com.mrzn.kodetest.extensions.combine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -82,7 +84,7 @@ class MainViewModel @Inject constructor(
         }.mapValues { (_, value) ->
             value.toUiItems(sorting)
         }
-    }
+    }.flowOn(Dispatchers.Default)
 
     val screenState: StateFlow<MainScreenState> = sortedEmployees
         .map {
