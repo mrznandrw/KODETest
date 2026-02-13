@@ -23,7 +23,8 @@ private val DarkColorScheme = darkColorScheme(
     onSecondaryContainer = Grey20,
     surfaceContainer = Black,
     surfaceVariant = ShimmerBaseDark,
-    onSurfaceVariant = ShimmerHighlightDark
+    onSurfaceVariant = ShimmerHighlightDark,
+    inverseOnSurface = White
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -39,7 +40,8 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = Grey20,
     surfaceContainer = White,
     surfaceVariant = ShimmerBaseLight,
-    onSurfaceVariant = ShimmerHighlightLight
+    onSurfaceVariant = ShimmerHighlightLight,
+    inverseOnSurface = White
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
