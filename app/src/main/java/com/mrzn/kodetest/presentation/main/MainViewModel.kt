@@ -9,9 +9,8 @@ import com.mrzn.kodetest.domain.entity.Employee
 import com.mrzn.kodetest.domain.result.LoadResult
 import com.mrzn.kodetest.domain.usecase.GetEmployeesUseCase
 import com.mrzn.kodetest.domain.usecase.RefreshEmployeesUseCase
-import com.mrzn.kodetest.extensions.mergeWith
+import com.mrzn.kodetest.extensions.combine
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -35,14 +35,10 @@ class MainViewModel @Inject constructor(
     private val employees = MutableStateFlow(emptyList<Employee>())
     private val isRefreshing = MutableStateFlow(false)
     private val currentSorting = MutableStateFlow(SortType.ALPHABETICAL)
+    private val error = MutableStateFlow<LoadResult.Failure?>(null)
 
     private val searchQuery = TextFieldState()
     private val searchFlow = snapshotFlow { searchQuery.text.trim() }.debounce(500)
-
-    private val errorEvents = MutableSharedFlow<Unit>()
-    private val errorFlow = errorEvents.map {
-        MainScreenState.Error
-    }
 
     private fun loadEmployees() {
         viewModelScope.launch {
@@ -54,13 +50,9 @@ class MainViewModel @Inject constructor(
                             employees.value = it.employees
                         }
 
-                        LoadResult.Failure.NoInternet, LoadResult.Failure.ServerError -> {
+                        is LoadResult.Failure -> {
                             isRefreshing.value = false
-                            if (employees.value.isNotEmpty()) {
-                                //todo show snackbar with error
-                            } else {
-                                errorEvents.emit(Unit)
-                            }
+                            error.value = it
                         }
                     }
                 }
@@ -95,16 +87,30 @@ class MainViewModel @Inject constructor(
                 employees = it,
                 sortType = currentSorting.value,
                 searchQuery = searchQuery
-            )
+            ) as MainScreenState
         }
         .onEach { isRefreshing.value = false }
-        .mergeWith(errorFlow)
-        .onStart { loadEmployees() }
-        .combine(isRefreshing) { screenState, isRefreshing ->
-            when (screenState) {
-                is MainScreenState.Employees -> screenState.copy(isRefreshing = isRefreshing)
-                MainScreenState.Error if isRefreshing -> MainScreenState.Loading
-                else -> screenState
+        .onStart {
+            loadEmployees()
+            emit(MainScreenState.Loading)
+        }
+        .combine(
+            isRefreshing.onEach { if (it) errorShown() },
+            error
+        ) { screenState, isRefreshing, error ->
+            InputData(screenState, isRefreshing, error)
+        }
+        .scan(MainScreenState.Loading as MainScreenState) { prevState, (state, isRefreshing, error) ->
+            when (prevState) {
+                is MainScreenState.Loading if state is MainScreenState.Employees -> state
+                is MainScreenState.Loading if (error != null) -> MainScreenState.Error
+                is MainScreenState.Error if isRefreshing -> MainScreenState.Loading
+                is MainScreenState.Employees -> (state as MainScreenState.Employees).copy(
+                    isRefreshing = isRefreshing,
+                    error = error
+                )
+
+                else -> prevState
             }
         }
         .stateIn(
@@ -126,6 +132,10 @@ class MainViewModel @Inject constructor(
 
     fun clearSearch() {
         searchQuery.clearText()
+    }
+
+    fun errorShown() {
+        error.value = null
     }
 
     private fun List<Employee>.sort(sortType: SortType): List<Employee> = when (sortType) {
@@ -159,4 +169,9 @@ class MainViewModel @Inject constructor(
             showBirthday = showBirthday
         )
 
+    private data class InputData(
+        val screenState: MainScreenState,
+        val isRefreshing: Boolean,
+        val error: LoadResult.Failure?
+    )
 }
