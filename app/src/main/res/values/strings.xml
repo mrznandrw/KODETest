@@ -1,3 +1,56 @@
 <resources>
     <string name="app_name">KODE Test</string>
+    <string name="search_placeholder">Введи имя, тег, почту…</string>
+    <string name="label_cancel">Отмена</string>
+    <string name="button_try_again">Попробовать снова</string>
+    <string name="critical_error_title">Какой-то сверхразум все сломал</string>
+    <string name="critical_error_subtitle">Постараемся быстро починить</string>
+    <string name="avatar_employee_description">Аватар работника</string>
+    <string name="icon_clear_description">Очистить поисковый запрос</string>
+    <string name="icon_sort_description">Сортировка</string>
+    <string name="icon_search_description">Поиск</string>
+    <string name="sort_label">Сортировка</string>
+    <string name="sort_by_alphabet">По алфавиту</string>
+    <string name="sort_by_birthday">По дню рождения</string>
+    <string name="empty_search_title">Мы никого не нашли</string>
+    <string name="empty_search_subtitle">Попробуй скорректировать запрос</string>
+    <string name="department_android">Android</string>
+    <string name="department_ios">iOS</string>
+    <string name="department_design">Дизайн</string>
+    <string name="department_management">Менеджмент</string>
+    <string name="department_qa">QA</string>
+    <string name="department_back_office">Офис</string>
+    <string name="department_frontend">Frontend</string>
+    <string name="department_hr">HR</string>
+    <string name="department_pr">PR</string>
+    <string name="department_backend">Backend</string>
+    <string name="department_support">Техподдержка</string>
+    <string name="department_analytics">Аналитика</string>
+    <string name="label_all">Все</string>
+    <string name="icon_back_description">Назад</string>
+    <string name="snackbar_label_refreshing">Секундочку, гружусь…</string>
+    <string name="snackbar_label_no_internet_error">Не могу обновить данные. Проверь соединение с интернетом.</string>
+    <string name="snackbar_label_server_error">Не могу обновить данные. Что-то пошло не так</string>
+
+    <plurals name="years_plural">
+        <item quantity="one">%d год</item>
+        <item quantity="few">%d года</item>
+        <item quantity="many">%d лет</item>
+        <item quantity="other">%d лет</item>
+    </plurals>
+
+    <string-array name="months_short">
+        <item>янв</item>
+        <item>фев</item>
+        <item>мар</item>
+        <item>апр</item>
+        <item>май</item>
+        <item>июн</item>
+        <item>июл</item>
+        <item>авг</item>
+        <item>сен</item>
+        <item>окт</item>
+        <item>ноя</item>
+        <item>дек</item>
+    </string-array>
 </resources>

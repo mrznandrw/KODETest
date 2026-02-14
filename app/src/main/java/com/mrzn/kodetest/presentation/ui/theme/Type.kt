@@ -1,4 +1,4 @@
-package com.mrzn.kodetest.ui.theme
+package com.mrzn.kodetest.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
